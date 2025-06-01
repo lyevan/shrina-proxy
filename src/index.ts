@@ -17,6 +17,7 @@ server.listen(PORT, () => {
   logger.info(
     {
       type: "server",
+      host: host,
       port: PORT,
       env: SERVER.NODE_ENV,
       cloudflare: USE_CLOUDFLARE,

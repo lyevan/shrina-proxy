@@ -1,12 +1,13 @@
-import http from 'http';
-import 'dotenv/config';
-import app from './app.js';
-import { SERVER } from './config/constants.js';
-import { logger } from './middleware.js';
+import http from "http";
+import "dotenv/config";
+import app from "./app.js";
+import { SERVER } from "./config/constants.js";
+import { logger } from "./middleware.js";
 
 // Get port from environment
 const PORT = process.env.PORT || 3000;
-const USE_CLOUDFLARE = process.env.USE_CLOUDFLARE === 'true';
+const host = process.env.RAILWAY_STATIC_URL || `localhost:${PORT}`;
+const USE_CLOUDFLARE = process.env.USE_CLOUDFLARE === "true";
 
 // Create regular HTTP server since Cloudflare will handle HTTP/2
 const server = http.createServer(app);
@@ -15,32 +16,31 @@ const server = http.createServer(app);
 server.listen(PORT, () => {
   logger.info(
     {
-      type: 'server',
+      type: "server",
       port: PORT,
       env: SERVER.NODE_ENV,
-      cloudflare: USE_CLOUDFLARE
+      cloudflare: USE_CLOUDFLARE,
     },
-    `Server is running on http://localhost:${PORT}`
+    `Server is running on http://${host}`
   );
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
+process.on("SIGTERM", () => {
+  logger.info("SIGTERM signal received: closing HTTP server");
   server.close(() => {
-    logger.info('HTTP server closed');
+    logger.info("HTTP server closed");
   });
 });
 
-
 // Handle server errors
-server.on('error', (err) => {
+server.on("error", (err) => {
   logger.error(
     {
-      type: 'server',
+      type: "server",
       error: err instanceof Error ? err : String(err),
     },
-    'Server error'
+    "Server error"
   );
 
   // Exit on critical errors
@@ -48,24 +48,24 @@ server.on('error', (err) => {
 });
 
 // Handle graceful shutdown
-const signals = ['SIGINT', 'SIGTERM'] as const;
+const signals = ["SIGINT", "SIGTERM"] as const;
 
 signals.forEach((signal) => {
   process.on(signal, () => {
     logger.info(
       {
-        type: 'server',
+        type: "server",
         signal,
       },
-      'Shutting down server'
+      "Shutting down server"
     );
 
     server.close(() => {
       logger.info(
         {
-          type: 'server',
+          type: "server",
         },
-        'Server closed'
+        "Server closed"
       );
       process.exit(0);
     });
@@ -74,9 +74,9 @@ signals.forEach((signal) => {
     setTimeout(() => {
       logger.error(
         {
-          type: 'server',
+          type: "server",
         },
-        'Server failed to close gracefully, forcing exit'
+        "Server failed to close gracefully, forcing exit"
       );
       process.exit(1);
     }, 10000).unref();
